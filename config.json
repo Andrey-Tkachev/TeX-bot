@@ -1,0 +1,7 @@
+{ 
+    "token": "321732536:AAFOOSuPAA5eB6yKk9uvNByUpwFIuhJHvlQ",
+    "images-dir" : "images",
+    "images-ext" : "png",
+    "resolution" : "300x300",
+    "bot-messages" : { "send-photo" : "It's your TeX" }
+}
