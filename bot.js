@@ -11,6 +11,7 @@ const token = config.get('token');
 
 var bot = new TelegramBot(token, { polling: true });
 
+const tex_dir = config.get('tex-dir');
 const images_dir = config.get('images-dir');
 const images_ext = config.get('images-ext');
 const images_res = config.get('resolution');
@@ -25,18 +26,17 @@ bot.onText(/\/tex (.+)/, function (msg, match) {
   // of the message
 
   // name of res file without extension
-  var filename  = 'test';
-
+  var filename  = msg.message_id;
+  var path2preprocess = path.join(tex_dir, filename + '.tex');
   var data = match[1];
   // create file with message as content
-  fs.writeFile(filename, data, function (err) {
+  fs.writeFile(path2preprocess, data, function (err) {
       if (err) return console.log(err);
 
       var chatId = msg.chat.id;
-      var path2res = path.join(images_dir, filename + images_ext);
-
+      var path2res = path.join(images_dir, filename + '.' + images_ext);
       const tex2im = spawn('tex2im', ['-r', images_res,
-                                      '-o', path2res, filename]);
+                                      '-o', path2res, path2preprocess]);
       tex2im.stdout.on('data', (data) => {
         log.error(`stdout: ${data}`);
       });

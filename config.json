@@ -1,5 +1,6 @@
 { 
     "token": "321732536:AAFOOSuPAA5eB6yKk9uvNByUpwFIuhJHvlQ",
+    "tex-dir" : "tex",
     "images-dir" : "images",
     "images-ext" : "png",
     "resolution" : "300x300",
