@@ -19,6 +19,7 @@ const images_res = config.get('resolution');
 const server_ip = config.get('ip');
 const server_port = config.get('static-port');
 const messages = config.get('bot-messages');
+
 const tex2im_ex = config.get('tex2im');
 // Server to images for inline mode
 var static_files = new static.Server(`./${images_dir}`);
@@ -92,7 +93,7 @@ bot.on('inline_query', function(query) {
   var filename = query.id + '_inline';
   var data = query.query;
   tex2png(data, filename, function (path2res) {
-    var resUrl = `${server_ip}:${server_port}/${filename}.${extension}`;
+    var resUrl = `${server_ip}:${server_port}/${filename}.${images_ext}`;
     var result = inlineQueryResultPhotoFactory('1', resUrl); // 1 becouse we have only one result
     bot.answerInlineQuery(queryId, [result]);
   });
