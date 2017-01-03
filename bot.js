@@ -35,7 +35,8 @@ function inlineQueryResultPhotoFactory(id, photo_url) {
   return {
     type: 'photo',
     id: id,
-    photo_url: photo_url
+    photo_url: photo_url,
+    thumb_url: photo_url
   }
 }
 
