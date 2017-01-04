@@ -124,17 +124,18 @@ function _inlineQueryProcessing(query) {
   tex2png(data, filename, function (path2res) {
     console.log(path2res);
     // Create thumbnail of image
+    thumb_name = 'thumb_' + filename;
     thumb({
         source: path2res,
         destination: images_dir,
         concurrency: 4,
-        basename: 'thumb_' + filename,
+        basename: thumb_name,
         width: 400,
           }, function(err) {
       if (!err) {
         log.info('Thumb created.');
         var resUrl = `${server_ip}:${server_port}/${filename}.${images_ext}`;
-        var resThumb = `${server_ip}:${server_port}/${filename + '.thumb'}.${images_ext}`
+        var resThumb = `${server_ip}:${server_port}/${thumb_name}.${images_ext}`
         var result = inlineQueryResultPhotoFactory('1', resUrl, resThumb); // 1 becouse we have only one result
         bot.answerInlineQuery(queryId, [result]);
       } else 
