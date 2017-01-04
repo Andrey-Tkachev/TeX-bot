@@ -3,9 +3,9 @@
     "tex-dir" : "tex",
     "images-dir" : "images",
     "images-ext" : "png",
-    "resolution" : "300x300",
+    "resolution" : "500x500",
     "bot-messages" : { "send-photo" : "It's your TeX" },
-    "ip" : "192.241.135.43",
+    "ip" : "127.0.0.1",
     "static-port" : "8080",
     "tex2im" : "tex2im"
 }
