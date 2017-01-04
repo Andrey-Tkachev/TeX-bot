@@ -122,14 +122,13 @@ function _inlineQueryProcessing(query) {
     log.warn('Data is incorrect.');
   }
   tex2png(data, filename, function (path2res) {
-    console.log(path2res);
     // Create thumbnail of image
-    thumb_name = 'thumb_' + filename;
+    thumb_name = filename + '_thumb';
     thumb({
         source: path2res,
         destination: images_dir,
         concurrency: 4,
-        basename: thumb_name,
+        basename: filename,
         width: 400,
           }, function(err) {
       if (!err) {
