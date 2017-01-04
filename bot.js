@@ -7,7 +7,8 @@ var path        = require('path'); // for pathnames generating
 
 var log         = require('./libs/log')(module);
 var config      = require('./libs/config');
-var static      = require('node-static');
+var url         = require('url');
+var http       = require('http');
 var thumb       = require('node-thumbnail').thumb;
 var spawn       = require('child_process').spawn; // for bash scripts running
 
@@ -39,13 +40,50 @@ const server_ip = config.get('ip');
 const server_port = config.get('static-port');
 
 // Server to images for inline mode
-var static_files = new static.Server(`./${images_dir}`);
-log.info('File server start up.');
-require('http').createServer(function (request, response) {
-    request.addListener('end', function () {
-        static_files.serve(request, response);
-    }).resume();
+http.createServer(function (req, res) {
+  log.info(`${req.method} ${req.url}`);
+  // parse URL
+  const parsedUrl = url.parse(req.url);
+  // extract URL path
+  var filename = `.${parsedUrl.pathname}`;
+  var pathname = path.join(images_dir, filename);
+  // maps file extention to MIME types
+  const mimeType = {
+    '.ico': 'image/x-icon',
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.svg': 'image/svg+xml',
+    '.pdf': 'application/pdf',
+    '.doc': 'application/msword',
+    '.ttf': 'aplication/font-sfnt'
+  };
+  fs.exists(pathname, function (exist) {
+    if(!exist) {
+      // if the file is not found, return 404
+      res.statusCode = 404;
+      res.end(`File ${pathname} not found!`);
+      log.warn('Unexisted file was requested.');
+      return;
+    }
+
+    // read file from file system
+    fs.readFile(pathname, function(err, data){
+      if(err){
+        res.statusCode = 500;
+        res.end(`Error getting the file: ${err}.`);
+        log.error('Error during file reading.');
+      } else {
+        // based on the URL path, extract the file extention. e.g. .js, .doc, ...
+        const ext = path.parse(pathname).ext;
+        // if the file is found, set Content-type and send data
+        res.setHeader('Content-type', mimeType[ext] || 'text/plain' );
+        res.end(data);
+      }
+    });
+  });
 }).listen(server_port);
+log.info(`Server listening on port ${server_port}`);
+
 
 // Bot's messages wich will be sended to users
 const messages = config.get('bot-messages');
