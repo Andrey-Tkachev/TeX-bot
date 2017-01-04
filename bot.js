@@ -70,6 +70,7 @@ function tex2png(data, filename, callback) {
       var path2res = path.join(images_dir, filename + '.' + images_ext);
       var tex2im = spawn(tex2im_ex, ['-r', images_res,
                                      '-o', path2res,
+                                     '-f', images_ext,
                                       path2preprocess], {stdio:'inherit'});
 
       tex2im.on('error', function(err){
