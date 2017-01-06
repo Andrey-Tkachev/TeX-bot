@@ -3,7 +3,7 @@ var TelegramBot = require('node-telegram-bot-api');
 
 // import libs for work with system
 var fs          = require('fs'); // file-system
-var path        = require('path'); // for pathnames generating
+var path        = require('path'); // for paths generating
 
 var log         = require('./libs/log')(module);
 var config      = require('./libs/config');
@@ -26,7 +26,7 @@ function createFolder(_path) {
     if(!err || (err && err.code === 'EEXIST')){
         log.info(_path + ' init succsesed.');
     } else {
-        clog.error(err);
+        log.error(err);
     }
   });
 }
@@ -37,6 +37,7 @@ createFolder(tex_dir);
 
 // File server options
 const server_ip = config.get('ip');
+const domain_name = config.get('domain');
 const server_port = config.get('static-port');
 
 // Server to images for inline mode
@@ -53,9 +54,7 @@ http.createServer(function (req, res) {
     '.png': 'image/png',
     '.jpg': 'image/jpeg',
     '.svg': 'image/svg+xml',
-    '.pdf': 'application/pdf',
-    '.doc': 'application/msword',
-    '.ttf': 'aplication/font-sfnt'
+    '.pdf': 'application/pdf'
   };
   fs.exists(pathname, function (exist) {
     if(!exist) {
@@ -82,7 +81,7 @@ http.createServer(function (req, res) {
     });
   });
 }).listen(server_port);
-log.info(`Server listening on port ${server_port}`);
+log.info(`File server listening on port ${server_port}.`);
 
 
 // Bot's messages wich will be sended to users
@@ -104,7 +103,7 @@ function isValidTeX(data) {
 function tex2png(data, filename, callback) {
   var path2preprocess = path.join(tex_dir, filename + '.tex');
   fs.writeFile(path2preprocess, data, function (err) {
-      if (err) return console.log(err);
+      if (err) return log.error(err);
       var path2res = path.join(images_dir, filename + '.' + images_ext);
       var tex2im = spawn(tex2im_ex, ['-r', images_res,
                                      '-o', path2res,
@@ -131,7 +130,9 @@ function inlineQueryResultPhotoFactory(id, photo_url, thumb_url) {
     type: 'photo',
     id: id,
     photo_url: photo_url,
-    thumb_url: thumb_url
+    thumb_url: thumb_url,
+    photo_width: 300,
+    photo_height: 300
   }
 }
 
@@ -168,16 +169,19 @@ function _inlineQueryProcessing(query) {
         destination: images_dir,
         concurrency: 4,
         basename: filename,
-        width: 400,
+        width: 600,
           }, function(err) {
       if (!err) {
         log.info('Thumb created.');
-        var resUrl = `${server_ip}:${server_port}/${filename}.${images_ext}`;
-        var resThumb = `${server_ip}:${server_port}/${thumb_name}.${images_ext}`
-        var result = inlineQueryResultPhotoFactory('1', resUrl, resThumb); // 1 becouse we have only one result
+        var resUrl = `${domain_name}:${server_port}/${filename}.${images_ext}`;
+        var resThumb = `${domain_name}:${server_port}/${thumb_name}.${images_ext}`
+        var result = inlineQueryResultPhotoFactory(queryId, resUrl, resThumb);
+        log.info('Generated url:')
+        console.log(resUrl);
         bot.answerInlineQuery(queryId, [result]);
       } else 
-        log.error('Error during thumb creation');
+        log.error('Error during thumb creation.');
+        console.log(err);
     });
   });
 }
