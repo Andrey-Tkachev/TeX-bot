@@ -176,7 +176,7 @@ function _inlineQueryProcessing(query) {
         var resUrl = `${domain_name}:${server_port}/${filename}.${images_ext}`;
         var resThumb = `${domain_name}:${server_port}/${thumb_name}.${images_ext}`
         var result = inlineQueryResultPhotoFactory(queryId, resUrl, resThumb);
-        log.info('Generated url:')
+        log.info('Generated url:');
         console.log(resUrl);
         bot.answerInlineQuery(queryId, [result]);
       } else 
