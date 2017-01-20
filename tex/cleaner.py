@@ -1,7 +1,7 @@
 #!usr/bin/python3
 import os, time
 
-del_dirs = ['/root/TeX_bot/tex', '/root/TeX_bot/images']
+del_dirs = ['/root/TeX-bot/tex', '/root/TeX-bot/images']
 del_time = 60
 
 for path in del_dirs:
