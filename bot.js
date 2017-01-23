@@ -4,11 +4,11 @@ var TelegramBot = require('node-telegram-bot-api');
 // import libs for work with system
 var fs          = require('fs'); // file-system
 var path        = require('path'); // for paths generating
-
+var sizeOf      = require('image-size');
 var log         = require('./libs/log')(module);
 var config      = require('./libs/config');
 var url         = require('url');
-var http       = require('http');
+var http        = require('http');
 var thumb       = require('node-thumbnail').thumb;
 var spawn       = require('child_process').spawn; // for bash scripts running
 
@@ -105,7 +105,7 @@ function tex2png(data, filename, callback) {
   fs.writeFile(path2preprocess, data, function (err) {
       if (err) return log.error(err);
       var path2res = path.join(images_dir, filename + '.' + images_ext);
-      var tex2im = spawn(tex2im_ex, ['-r', images_res,
+      var tex2im = spawn(tex2im_ex, ['-r', images_res, '-a',
                                      '-o', path2res,
                                      '-f', images_ext,
                                       path2preprocess], {stdio:'inherit'});
@@ -125,14 +125,14 @@ function tex2png(data, filename, callback) {
   });
 }
 
-function inlineQueryResultPhotoFactory(id, photo_url, thumb_url) {
+function inlineQueryResultPhotoFactory(id, photo_url, thumb_url, sizes) {
   return {
     type: 'photo',
     id: id,
     photo_url: photo_url,
     thumb_url: thumb_url,
-    photo_width: 300,
-    photo_height: 300
+    photo_width: sizes.width,
+    photo_height: sizes.height
   }
 }
 
@@ -162,26 +162,33 @@ function _inlineQueryProcessing(query) {
     log.warn('Data is incorrect.');
   }
   tex2png(data, filename, function (path2res) {
-    // Create thumbnail of image
-    thumb_name = filename + '_thumb';
-    thumb({
-        source: path2res,
-        destination: images_dir,
-        concurrency: 4,
-        basename: filename,
-        width: 600,
-          }, function(err) {
+    sizeOf(path2res, function (err, dimensions) {
       if (!err) {
-        log.info('Thumb created.');
-        var resUrl = `${domain_name}:${server_port}/${filename}.${images_ext}`;
-        var resThumb = `${domain_name}:${server_port}/${thumb_name}.${images_ext}`
-        var result = inlineQueryResultPhotoFactory(queryId, resUrl, resThumb);
-        log.info('Generated url:');
-        console.log(resUrl);
-        bot.answerInlineQuery(queryId, [result]);
-      } else 
-        log.error('Error during thumb creation.');
-        console.log(err);
+        log.error('Error during dimensions extraction.');
+        return;
+      }
+      thumb_name = filename + '_thumb';
+      thumb_dim = { width: Math.floor(dimensions.width / 10),
+                    height: Math.floor(dimensions.height / 10)}
+      thumb({
+          source: path2res,
+          destination: images_dir,
+          concurrency: 3,
+          basename: filename,
+          width: thumb_dim.width,
+          height: thumb_dim.height
+            }, function(err) {
+        if (!err) {
+          log.info('Thumb created.');
+          var resUrl = `${domain_name}:${server_port}/${filename}.${images_ext}`;
+          var resThumb = `${domain_name}:${server_port}/${thumb_name}.${images_ext}`
+          var result = inlineQueryResultPhotoFactory(queryId, resUrl, resThumb, dimensions);
+          log.info('Generated url');
+          bot.answerInlineQuery(queryId, [result]);
+        } else 
+          log.error('Error during thumb creation.');
+          console.log(err);
+      });
     });
   });
 }
