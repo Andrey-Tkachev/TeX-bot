@@ -11,6 +11,7 @@ var url         = require('url');
 var http        = require('http');
 var thumb       = require('node-thumbnail').thumb;
 var spawn       = require('child_process').spawn; // for bash scripts running
+var validator   = require('./tex-validator');
 
 const token     = config.get('token');
 var bot = new TelegramBot(token, { polling: true });
@@ -96,10 +97,6 @@ bot.onText(/\/tex (.+)/, _simpleQueryProcessing);
 // Listen for message in Inline Mod
 bot.on('inline_query', _inlineQueryProcessing);
 
-function isValidTeX(data) {
-  return (data != '');
-}
-
 function tex2png(data, filename, callback) {
   var path2preprocess = path.join(tex_dir, filename + '.tex');
   fs.writeFile(path2preprocess, data, function (err) {
@@ -158,18 +155,19 @@ function _inlineQueryProcessing(query) {
   var queryId = query.id;
   var filename = query.id + '_inline';
   var data = query.query;
-  if (!isValidTeX(data)) {
+  if (!validator.isValidTeX(data)) {
     log.warn('Data is incorrect.');
   }
   tex2png(data, filename, function (path2res) {
     sizeOf(path2res, function (err, dimensions) {
-      if (!err) {
+      if (err) {
         log.error('Error during dimensions extraction.');
+        console.log(err);
         return;
       }
       thumb_name = filename + '_thumb';
-      thumb_dim = { width: Math.floor(dimensions.width / 10),
-                    height: Math.floor(dimensions.height / 10)}
+      thumb_dim = { width: Math.floor(dimensions.width / 5),
+                    height: Math.floor(dimensions.height / 5)}
       thumb({
           source: path2res,
           destination: images_dir,
@@ -183,7 +181,7 @@ function _inlineQueryProcessing(query) {
           var resUrl = `${domain_name}:${server_port}/${filename}.${images_ext}`;
           var resThumb = `${domain_name}:${server_port}/${thumb_name}.${images_ext}`
           var result = inlineQueryResultPhotoFactory(queryId, resUrl, resThumb, dimensions);
-          log.info('Generated url');
+          log.info('The answer has been sent');
           bot.answerInlineQuery(queryId, [result]);
         } else 
           log.error('Error during thumb creation.');
