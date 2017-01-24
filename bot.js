@@ -1,17 +1,20 @@
 // import bot framework
 var TelegramBot = require('node-telegram-bot-api');
 
-// import libs for work with system
+// import tools for work with system
 var fs          = require('fs'); // file-system
 var path        = require('path'); // for paths generating
+var spawn       = require('child_process').spawn; // for bash scripts running
+var thumb       = require('node-thumbnail').thumb;
 var sizeOf      = require('image-size');
-var log         = require('./libs/log')(module);
-var config      = require('./libs/config');
 var url         = require('url');
 var http        = require('http');
-var thumb       = require('node-thumbnail').thumb;
-var spawn       = require('child_process').spawn; // for bash scripts running
-var validator   = require('./tex-validator');
+
+var config      = require('./tools/config');
+var log         = require('./tools/log')(module);
+var validator   = require('./tools/tex-validator');
+var files_tools = require('./tools/files-tools');
+var api_mid     = require('./tools/api-middleware');
 
 const token     = config.get('token');
 var bot = new TelegramBot(token, { polling: true });
@@ -21,20 +24,12 @@ const tex_dir = config.get('tex-dir');
 const images_dir = config.get('images-dir');
 const images_ext = config.get('images-ext');
 const images_res = config.get('resolution');
+const thumb_coef = config.get('thumb-coef');
 
-function createFolder(_path) {
-  fs.mkdir(_path,function(err){
-    if(!err || (err && err.code === 'EEXIST')){
-        log.info(_path + ' init succsesed.');
-    } else {
-        log.error(err);
-    }
-  });
-}
 
 log.info('Init of needed folders.');
-createFolder(images_dir);
-createFolder(tex_dir);
+files_tools.createFolder(images_dir);
+files_tools.createFolder(tex_dir);
 
 // File server options
 const server_ip = config.get('ip');
@@ -99,7 +94,7 @@ bot.on('inline_query', _inlineQueryProcessing);
 
 function tex2png(data, filename, callback) {
   var path2preprocess = path.join(tex_dir, filename + '.tex');
-  fs.writeFile(path2preprocess, data, function (err) {
+  fs.writeFile(path2preprocess, data, (err) => {
       if (err) return log.error(err);
       var path2res = path.join(images_dir, filename + '.' + images_ext);
       var tex2im = spawn(tex2im_ex, ['-r', images_res, '-a',
@@ -107,7 +102,7 @@ function tex2png(data, filename, callback) {
                                      '-f', images_ext,
                                       path2preprocess], {stdio:'inherit'});
 
-      tex2im.on('error', function(err){
+      tex2im.on('error', (err) => {
         log.error('parentError:', err);
       });
 
@@ -122,22 +117,7 @@ function tex2png(data, filename, callback) {
   });
 }
 
-function inlineQueryResultPhotoFactory(id, photo_url, thumb_url, sizes) {
-  return {
-    type: 'photo',
-    id: id,
-    photo_url: photo_url,
-    thumb_url: thumb_url,
-    photo_width: sizes.width,
-    photo_height: sizes.height
-  }
-}
-
 function _simpleQueryProcessing(msg, match) {
-  // 'msg' is the received Message from Telegram
-  // 'match' is the result of executing the regexp above on the text content
-  // of the message
-  // name of res file without extension
   log.info('Simple query.');
   var filename  = msg.message_id;
   var data = match[1];
@@ -157,6 +137,9 @@ function _inlineQueryProcessing(query) {
   var data = query.query;
   if (!validator.isValidTeX(data)) {
     log.warn('Data is incorrect.');
+    result = api_mid.inlineArticleFactory(queryId, 'Not valid', 'Not valid TeX.');
+    bot.answerInlineQuery(queryId, [result]);
+    return;
   }
   tex2png(data, filename, function (path2res) {
     sizeOf(path2res, function (err, dimensions) {
@@ -166,8 +149,8 @@ function _inlineQueryProcessing(query) {
         return;
       }
       thumb_name = filename + '_thumb';
-      thumb_dim = { width: Math.floor(dimensions.width / 5),
-                    height: Math.floor(dimensions.height / 5)}
+      thumb_dim = { width: Math.floor(dimensions.width / thumb_coef),
+                    height: Math.floor(dimensions.height / thumb_coef)}
       thumb({
           source: path2res,
           destination: images_dir,
@@ -175,16 +158,18 @@ function _inlineQueryProcessing(query) {
           basename: filename,
           width: thumb_dim.width,
           height: thumb_dim.height
-            }, function(err) {
+            }, (err) => {
         if (!err) {
           log.info('Thumb created.');
           var resUrl = `${domain_name}:${server_port}/${filename}.${images_ext}`;
           var resThumb = `${domain_name}:${server_port}/${thumb_name}.${images_ext}`
-          var result = inlineQueryResultPhotoFactory(queryId, resUrl, resThumb, dimensions);
+          var result = api_mid.inlinePhotoFactory(queryId, resUrl, resThumb, dimensions);
           log.info('The answer has been sent');
           bot.answerInlineQuery(queryId, [result]);
         } else 
           log.error('Error during thumb creation.');
+          result = api_mid.inlineArticleFactory(queryId, 'ERROR', 'Iternal server error.');
+          bot.answerInlineQuery(queryId, [result]);
           console.log(err);
       });
     });

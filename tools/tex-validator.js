@@ -32,4 +32,5 @@ function isValidTeX(data) {
   return (brackets_stack.length == 0);
 }
 
+console.log(isValidTeX('[asd]}'));
 module.exports.isValidTeX = isValidTeX;
