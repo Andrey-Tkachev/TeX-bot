@@ -1,4 +1,6 @@
 *.tex
 *.png
 *.jpeg
+*.jpg
+node_modules
 config.json

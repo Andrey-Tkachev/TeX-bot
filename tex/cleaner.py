@@ -19,7 +19,7 @@ if args.file:
     config = open(args.file, 'r').read()
     json_prs = json.loads(config)
     del_dirs += json_prs['dirs']
-    json_prs['ignore'].append(args.file)
+    json_prs['ignore'].append(args.file.split('/')[-1])
     del_ignore += json_prs['ignore']
 
 for path in del_dirs:

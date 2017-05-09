@@ -1,0 +1,35 @@
+{
+  "name": "tex-bot",
+  "version": "0.1.0",
+  "description": "This is bot for telegram messanger wich can convert user's LaTeX-messages in jpg files (and in inline mod too).",
+  "main": "bot.js",
+  "dependencies": {
+    "image-size": "^0.5.1",
+    "mkdirp": "^0.5.1",
+    "nconf": "^0.8.4",
+    "node-static": "^0.7.9",
+    "node-telegram-bot-api": "^0.25.0",
+    "node-thumbnail": "^0.7.0",
+    "winston": "^2.3.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Andrey-Tkachev/TeX-bot.git"
+  },
+  "keywords": [
+    "tex",
+    "latex",
+    "bot",
+    "telegram"
+  ],
+  "author": "Andrey Tkachev",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/Andrey-Tkachev/TeX-bot/issues"
+  },
+  "homepage": "https://github.com/Andrey-Tkachev/TeX-bot#readme"
+}

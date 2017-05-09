@@ -4,8 +4,10 @@
     "images-dir" : "images",
     "images-ext" : "png",
     "resolution" : "500x500",
+    "thumb-сoef" : 5,
     "bot-messages" : { "send-photo" : "It's your TeX" },
     "ip" : "127.0.0.1",
+    "domain" : "http://www.texbot.ml",
     "static-port" : "8080",
     "tex2im" : "tex2im"
 }
